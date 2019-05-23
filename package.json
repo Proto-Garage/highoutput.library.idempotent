@@ -1,0 +1,38 @@
+{
+  "name": "onewallet.library.idempotent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha test/idempotent.spec.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Proto-Garage/onewallet.library.idempotent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Proto-Garage/onewallet.library.idempotent/issues"
+  },
+  "homepage": "https://github.com/Proto-Garage/onewallet.library.idempotent#readme",
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/lru-cache": "^5.1.0",
+    "@types/mocha": "^5.2.6",
+    "@types/mongoose": "^5.5.1",
+    "@types/ramda": "^0.26.8",
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4",
+    "ramda": "^0.26.1",
+    "ts-node": "^8.1.0",
+    "tsconfig": "^7.0.0",
+    "tslint": "^5.16.0",
+    "typescript": "^3.4.5"
+  },
+  "dependencies": {
+    "lru-cache": "^5.1.1",
+    "mongoose": "^5.5.10"
+  }
+}
