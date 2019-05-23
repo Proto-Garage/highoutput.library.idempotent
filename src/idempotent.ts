@@ -1,34 +1,68 @@
-export interface IdempotentStore {
-  get<T = any>(request: string): Promise<{ found: boolean; result: T }>;
-  set<T>(request: string, response: T): Promise<boolean>;
-  lock(request: string): Promise<boolean>;
-  release(request: string): Promise<boolean>;
-}
+import { FibonacciStrategy, Backoff } from 'backoff';
 
-export class LockError extends Error {
-  constructor() {
-    super('Failed to lock the request id');
-  }
+export interface IdempotentStore {
+  get(id: string): Promise<any | null>;
+  set(
+    id: string,
+    params:
+      | {
+          status: 'STARTED';
+        }
+      | {
+          status: 'DONE';
+          result: any;
+        }
+  ): Promise<boolean>;
 }
 
 export class Idempotent {
-  constructor(private store: IdempotentStore) {}
+  constructor(private readonly store: IdempotentStore) {}
 
   async execute<T = any>(fn: () => Promise<T>, request: string): Promise<T> {
-    const lock = await this.store.lock(request);
-    if (!lock) {
-      throw new LockError();
-    }
-    const response = await this.store.get(request);
-    if (response && response.found) {
-      return response.result;
+    let result: T | null;
+    try {
+      await this.store.set(request, { status: 'STARTED' });
+    } catch (err) {
+      if (err.code !== 'REQUEST_EXISTS') {
+        throw err;
+      }
+
+      return new Promise((resolve, reject) => {
+        const handler = async () => {
+          result = await this.store.get(request);
+
+          if (result) {
+            resolve(result);
+            return;
+          }
+
+          backoff.backoff();
+        };
+
+        const backoff = new Backoff(
+          new FibonacciStrategy({
+            initialDelay: 1,
+            maxDelay: 100,
+            randomisationFactor: 0.5,
+          })
+        );
+
+        backoff.failAfter(10);
+
+        backoff.on('backoff', handler);
+
+        backoff.on('fail', async () => {
+          reject(new Error('Timeout'));
+        });
+
+        handler();
+      });
     }
 
-    let res = await fn();
-    await this.store.set(request, res);
+    result = await fn();
 
-    await this.store.release(request);
-    return res;
+    await this.store.set(request, { status: 'DONE', result });
+    return result;
   }
 }
 
