@@ -4,25 +4,27 @@ import { IdempotentStore, Request } from './idempotent';
 export default class implements IdempotentStore {
   private model: Model<Document & Request>;
   constructor(connection: Connection, expires: number = 3 * 24 * 60) {
-    const schema = new Schema(
-      {
-        _id: {
-          type: String,
-          required: true,
-        },
-        status: {
-          type: String,
-          enum: ['STARTED', 'DONE'],
-          required: true,
-        },
-        result: {
-          type: Schema.Types.Mixed,
-          default: null,
-          expires,
-        },
+    const schema = new Schema({
+      _id: {
+        type: String,
+        required: true,
       },
-      { _id: false }
-    );
+      status: {
+        type: String,
+        enum: ['STARTED', 'DONE'],
+        required: true,
+      },
+      result: {
+        type: Schema.Types.Mixed,
+        default: null,
+      },
+
+      dateTimeCreated: {
+        type: Schema.Types.Date,
+        default: Date.now,
+        expires,
+      },
+    });
 
     this.model = connection.model<Document & Request>(
       'IdempotentRequest',
