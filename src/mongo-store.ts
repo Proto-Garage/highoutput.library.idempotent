@@ -1,7 +1,7 @@
 import { Connection, Document, Model, Schema } from 'mongoose';
 import { IdempotentStore, Request } from './idempotent';
 
-export default class implements IdempotentStore {
+export class MongoStore implements IdempotentStore {
   private model: Model<Document & Request>;
   constructor(connection: Connection, expires: number = 3 * 24 * 60) {
     const schema = new Schema({
