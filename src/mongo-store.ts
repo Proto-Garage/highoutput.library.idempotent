@@ -66,3 +66,5 @@ export class MongoStore implements IdempotentStore {
     return true;
   }
 }
+
+export default MongoStore;
