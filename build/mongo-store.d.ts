@@ -1,6 +1,6 @@
 import { Connection } from 'mongoose';
 import { IdempotentStore } from './idempotent';
-export default class implements IdempotentStore {
+export declare class MongoStore implements IdempotentStore {
     private model;
     constructor(connection: Connection, expires?: number);
     get(id: string): Promise<any>;
@@ -11,3 +11,4 @@ export default class implements IdempotentStore {
         result: any;
     }): Promise<boolean>;
 }
+export default MongoStore;

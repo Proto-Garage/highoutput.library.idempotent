@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
-class default_1 {
+class MongoStore {
     constructor(connection, expires = 3 * 24 * 60) {
         const schema = new mongoose_1.Schema({
             _id: {
@@ -42,5 +42,6 @@ class default_1 {
         return true;
     }
 }
-exports.default = default_1;
+exports.MongoStore = MongoStore;
+exports.default = MongoStore;
 //# sourceMappingURL=mongo-store.js.map
