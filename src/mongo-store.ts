@@ -14,9 +14,19 @@ export default class implements IdempotentStore {
         type: String,
         required: true,
       },
+      status: {
+        type: String,
+        enum: ['STARTED', 'DONE'],
+        required: true,
+      },
       result: {
         type: Schema.Types.Mixed,
-        required: true,
+        default: null,
+      },
+
+      dateTimeCreated: {
+        type: Schema.Types.Date,
+        default: Date.now,
         expires,
       },
     });
