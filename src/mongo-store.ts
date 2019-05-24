@@ -1,13 +1,8 @@
 import { Connection, Document, Model, Schema } from 'mongoose';
-import { IdempotentStore } from './idempotent';
-
-interface IdempotentAttributes {
-  id: string;
-  result: any;
-}
+import { IdempotentStore, Request } from './idempotent';
 
 export default class implements IdempotentStore {
-  private model: Model<Document & IdempotentAttributes>;
+  private model: Model<Document & Request>;
   constructor(connection: Connection, expires: number = 3 * 24 * 60) {
     const schema = new Schema({
       _id: {
@@ -31,27 +26,43 @@ export default class implements IdempotentStore {
       },
     });
 
-    this.model = connection.model<Document & IdempotentAttributes>(
-      'Idempotent',
+    this.model = connection.model<Document & Request>(
+      'IdempotentRequest',
       schema
     );
   }
 
   async get(id: string) {
-    const found = await this.model.findById(id);
+    const request = await this.model.findById(id);
 
-    if (found) {
-      return found.result;
+    if (request) {
+      return request.toJSON();
     }
 
     return null;
   }
 
-  async set(request: string, result: any) {
-    await this.model.create({
-      _id: request,
-      result,
-    });
+  async set(
+    request: string,
+    params:
+      | {
+          status: 'STARTED';
+        }
+      | {
+          status: 'DONE';
+          result: any;
+        }
+  ) {
+    if (params.status === 'STARTED') {
+      await this.model.create({
+        _id: request,
+        ...params,
+      });
+    }
+
+    if (params.status === 'DONE') {
+      await this.model.updateOne({ _id: request }, params);
+    }
     return true;
   }
 }
