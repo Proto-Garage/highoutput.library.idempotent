@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import { delay } from 'highoutput-utilities';
 import R from 'ramda';
 
-import Idempotent from '../src/idempotent';
+import Idempotent, { RequestExistsError } from '../src/idempotent';
 
 const randomDelay = () => delay(5 + Math.random() * 20);
 describe('Idempotent', function() {
@@ -26,7 +26,7 @@ describe('Idempotent', function() {
 
         if (params.status === 'STARTED') {
           if (this.store[id]) {
-            throw { code: 'REQUEST_EXISTS' };
+            throw new RequestExistsError();
           }
         }
 

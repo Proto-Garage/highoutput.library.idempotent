@@ -7,6 +7,12 @@ export class TimeoutError extends Error {
   }
 }
 
+export class RequestExistsError extends Error {
+  constructor() {
+    super('Request exists');
+  }
+}
+
 export type Request = {
   id: string;
 } & (
@@ -43,7 +49,7 @@ export class Idempotent {
     try {
       await this.store.set(request, { status: 'STARTED' });
     } catch (err) {
-      if (err.code !== 'REQUEST_EXISTS') {
+      if (!(err instanceof RequestExistsError)) {
         throw err;
       }
 
