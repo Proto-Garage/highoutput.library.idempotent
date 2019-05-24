@@ -1,6 +1,12 @@
 import { FibonacciStrategy, Backoff } from 'backoff';
 import { delay } from 'highoutput-utilities';
 
+export class TimeoutError extends Error {
+  constructor() {
+    super('Timeout');
+  }
+}
+
 export type Request = {
   id: string;
 } & (
@@ -67,7 +73,7 @@ export class Idempotent {
 
         delay(this.options.timeout || '1m').then(() => {
           backoff.removeAllListeners();
-          reject(new Error('Timeout'));
+          reject(new TimeoutError());
         });
       });
     }
