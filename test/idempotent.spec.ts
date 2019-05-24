@@ -36,13 +36,8 @@ describe('Idempotent', function() {
 
       get: async (id: string) => {
         await randomDelay();
-        const request = this.store[id];
 
-        if (request && request.status === 'DONE') {
-          return request.result;
-        }
-
-        return null;
+        return this.store[id] || null;
       },
     });
   });
@@ -60,7 +55,7 @@ describe('Idempotent', function() {
       expect(handler.calledOnce).to.be.ok;
     });
 
-    describe('when executed multiple times at the same time', () => {
+    describe('When executed multiple times at the same time', () => {
       it('should run handler only once', async function() {
         const handler = sinon.fake(async () => 'hello');
 
@@ -68,6 +63,20 @@ describe('Idempotent', function() {
           R.times(() => this.idempotent.execute(handler, '1'))(1000)
         );
 
+        expect(handler.calledOnce).to.be.ok;
+      });
+    });
+
+    describe('Given the handler returns a falsy', () => {
+      it('should execute handler', async function() {
+        const handler = sinon.fake(async () => null);
+
+        let result = await this.idempotent.execute(handler, '1');
+
+        expect(result).to.equal(null);
+        expect(this.store)
+          .to.has.property('1')
+          .to.be.deep.equal({ status: 'DONE', result: null });
         expect(handler.calledOnce).to.be.ok;
       });
     });

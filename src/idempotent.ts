@@ -1,7 +1,18 @@
 import { FibonacciStrategy, Backoff } from 'backoff';
 
+export type Request<T = any> = {
+  id: string;
+} & (
+  | {
+      status: 'STARTED';
+    }
+  | {
+      status: 'DONE';
+      result: T;
+    });
+
 export interface IdempotentStore {
-  get(id: string): Promise<any | null>;
+  get(id: string): Promise<Request | null>;
   set(
     id: string,
     params:
@@ -19,7 +30,6 @@ export class Idempotent {
   constructor(private readonly store: IdempotentStore) {}
 
   async execute<T = any>(fn: () => Promise<T>, request: string): Promise<T> {
-    let result: T | null;
     try {
       await this.store.set(request, { status: 'STARTED' });
     } catch (err) {
@@ -29,10 +39,10 @@ export class Idempotent {
 
       return new Promise((resolve, reject) => {
         const handler = async () => {
-          result = await this.store.get(request);
+          const requestDocument = await this.store.get(request);
 
-          if (result) {
-            resolve(result);
+          if (requestDocument && requestDocument.status === 'DONE') {
+            resolve(requestDocument.result);
             return;
           }
 
@@ -59,7 +69,7 @@ export class Idempotent {
       });
     }
 
-    result = await fn();
+    const result = await fn();
 
     await this.store.set(request, { status: 'DONE', result });
     return result;
