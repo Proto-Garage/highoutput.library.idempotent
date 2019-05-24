@@ -1,6 +1,7 @@
 import { FibonacciStrategy, Backoff } from 'backoff';
+import { delay } from 'highoutput-utilities';
 
-export type Request<T = any> = {
+export type Request = {
   id: string;
 } & (
   | {
@@ -8,7 +9,7 @@ export type Request<T = any> = {
     }
   | {
       status: 'DONE';
-      result: T;
+      result: any;
     });
 
 export interface IdempotentStore {
@@ -27,7 +28,10 @@ export interface IdempotentStore {
 }
 
 export class Idempotent {
-  constructor(private readonly store: IdempotentStore) {}
+  constructor(
+    private readonly store: IdempotentStore,
+    private readonly options: { timeout?: string | number } = {}
+  ) {}
 
   async execute<T = any>(fn: () => Promise<T>, request: string): Promise<T> {
     try {
@@ -57,15 +61,14 @@ export class Idempotent {
           })
         );
 
-        backoff.failAfter(10);
-
         backoff.on('backoff', handler);
 
-        backoff.on('fail', async () => {
+        handler();
+
+        delay(this.options.timeout || '1m').then(() => {
+          backoff.removeAllListeners();
           reject(new Error('Timeout'));
         });
-
-        handler();
       });
     }
 
