@@ -1,5 +1,5 @@
 import { Connection, Document, Model, Schema } from 'mongoose';
-import { IdempotentStore, Request } from './idempotent';
+import { IdempotentStore, Request, RequestExistsError } from './idempotent';
 
 export class MongoStore implements IdempotentStore {
   private model: Model<Document & Request>;
@@ -46,18 +46,24 @@ export class MongoStore implements IdempotentStore {
     request: string,
     params:
       | {
-          status: 'STARTED';
-        }
+        status: 'STARTED';
+      }
       | {
-          status: 'DONE';
-          result: any;
-        }
+        status: 'DONE';
+        result: any;
+      }
   ) {
     if (params.status === 'STARTED') {
-      await this.model.create({
-        _id: request,
-        ...params,
-      });
+      try {
+        await this.model.create({
+          _id: request,
+          ...params,
+        });
+      } catch (err) {
+        if (err.message.startsWith('E11000 duplicate key error collection')) {
+          throw new RequestExistsError();
+        }
+      }
     }
 
     if (params.status === 'DONE') {
