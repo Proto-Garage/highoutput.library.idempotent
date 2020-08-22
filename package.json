@@ -40,7 +40,7 @@
     "@types/ms": "^0.7.30",
     "backoff": "^2.5.0",
     "highoutput-utilities": "0.0.10",
-    "mongoose": "^5.5.10",
+    "mongoose": "^5.7.5",
     "ms": "^2.1.1"
   }
 }
